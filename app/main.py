@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ET
 from typing import List, Dict, Tuple
 import asyncio
 import aiohttp
+from fastapi.responses import Response
 
 app = FastAPI(
     title="Universal File Translator",
@@ -693,3 +694,28 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap():
+    """Dynamically generate sitemap for the website"""
+    domain = "https://translatefiles.space"
+    urls = [
+        {"loc": f"{domain}/", "changefreq": "daily", "priority": "1.0"},
+        {"loc": f"{domain}/supported-formats", "changefreq": "weekly", "priority": "0.8"},
+        # You can add more pages here if needed
+    ]
+
+    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+
+    for url in urls:
+        sitemap_xml += "  <url>\n"
+        sitemap_xml += f"    <loc>{url['loc']}</loc>\n"
+        sitemap_xml += f"    <changefreq>{url['changefreq']}</changefreq>\n"
+        sitemap_xml += f"    <priority>{url['priority']}</priority>\n"
+        sitemap_xml += "  </url>\n"
+
+    sitemap_xml += "</urlset>"
+
+    return Response(content=sitemap_xml, media_type="application/xml")
