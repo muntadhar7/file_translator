@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal File Translator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-globe"></i> Universal Translator</h1>
+            <p>Translate multiple file formats instantly using AI translation APIs</p>
+        </div>
+
+        <div class="app-container">
+            <!-- Upload Section -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-file-import"></i>
+                    Upload & Translate
+                </div>
+
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="file">Select File</label>
+                        <div class="file-input-wrapper" id="fileDropZone">
+                            <i class="fas fa-cloud-upload-alt file-icon"></i>
+                            <div class="file-text">Click to upload or drag and drop</div>
+                            <div class="file-text file-hint">Multiple formats supported</div>
+                            <div class="file-formats">PO, JSON, CSV, XLIFF, XML, TXT, Properties</div>
+                            <div class="file-name" id="fileName"></div>
+                            <input type="file" id="file" name="file" accept=".po,.json,.csv,.xlf,.xliff,.xml,.txt,.properties" class="file-input" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="target_lang">Target Language</label>
+                        <select id="target_lang" name="target_lang">
+                            <option value="ar">Arabic</option>
+                            <option value="zh">Chinese</option>
+                            <option value="da">Danish</option>
+                            <option value="nl">Dutch</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="hi">Hindi</option>
+                            <option value="it">Italian</option>
+                            <option value="ja">Japanese</option>
+                            <option value="ko">Korean</option>
+                            <option value="pl">Polish</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="ru">Russian</option>
+                            <option value="es">Spanish</option>
+                            <option value="sv">Swedish</option>
+                            <option value="tr">Turkish</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="translateBtn">
+                        <i class="fas fa-magic"></i>
+                        Translate & Preview
+                    </button>
+                </form>
+
+                <div class="service-info">
+                    <div class="message info">
+                        <i class="fas fa-bolt"></i>
+                        <span>Supports 8 file formats with instant preview and download</span>
+                    </div>
+                </div>
+
+                <div id="message"></div>
+
+                <div class="download-section hidden" id="downloadSection">
+                    <a href="#" class="download-btn" id="downloadBtn">
+                        <i class="fas fa-download"></i>
+                        Download Translated File
+                    </a>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Translation Results
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-header">
+                        <div class="preview-title" id="previewTitle">File Preview</div>
+                        <div class="preview-count" id="previewCount">0 items</div>
+                    </div>
+                    <div class="preview-container" id="previewContainer">
+                        <div class="preview-placeholder">
+                            <i class="fas fa-language"></i>
+                            <p>Upload a file to see translation preview</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats hidden" id="statsSection">
+                    <div class="stat-card">
+                        <div class="stat-number" id="statTranslated">0</div>
+                        <div class="stat-label">Translated</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statSkipped">0</div>
+                        <div class="stat-label">Skipped</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statTotal">0</div>
+                        <div class="stat-label">Total Strings</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="features-section">
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-star"></i>
+                    Supported Formats
+                </div>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <i class="fas fa-file-code"></i>
+                        <span>PO Files</span>
+                        <small>Gettext translation files</small>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-file-alt"></i>
+                        <span>JSON Files</span>
+                        <small>Structured data files</small>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-table"></i>
+                        <span>CSV Files</span>
+                        <small>Spreadsheet data</small>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span>XLIFF Files</span>
+                        <small>XML Localization</small>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-code"></i>
+                        <span>XML Files</span>
+                        <small>Structured markup</small>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-file-text"></i>
+                        <span>Text Files</span>
+                        <small>Plain text content</small>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-cog"></i>
+                        <span>Properties</span>
+                        <small>Java properties files</small>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-robot"></i>
+                        <span>AI Translation</span>
+                        <small>Multiple engines</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
