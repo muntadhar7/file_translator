@@ -172,6 +172,44 @@
         </div>
     </div>
 
+    <footer class="footer" style="text-align: center; padding: 20px;">
+      <p>
+        <a href="/about" style="color: white">About</a> |
+        <a href="/privacy-policy" style="color: white">Privacy Policy</a> |
+        <a href="/terms" style="color: white">Terms</a> |
+        <a href="/contact" style="color: white">Contact</a>
+      </p>
+      <p>© 2025 Universal File Translator. All rights reserved.</p>
+    </footer>
+
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookieConsent" class="cookie-consent hidden">
+      <div class="cookie-content">
+        <p>
+          🍪 We use cookies to personalize content, serve ads, and analyze traffic.
+          By continuing to use this site, you agree to our
+          <a href="/privacy-policy">Privacy Policy</a>.
+        </p>
+        <button id="acceptCookies" class="btn btn-primary">Accept</button>
+      </div>
+    </div>
+
+    <script>
+      // Show cookie banner if not accepted
+      document.addEventListener("DOMContentLoaded", () => {
+        if (!localStorage.getItem("cookieAccepted")) {
+          document.getElementById("cookieConsent").classList.remove("hidden");
+        }
+
+        document.getElementById("acceptCookies").addEventListener("click", () => {
+          localStorage.setItem("cookieAccepted", "true");
+          document.getElementById("cookieConsent").classList.add("hidden");
+        });
+      });
+    </script>
+
+
     <script src="/static/js/script.js"></script>
 </body>
 </html>
