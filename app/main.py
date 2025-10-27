@@ -1,3 +1,5 @@
+import re
+
 from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -83,6 +85,19 @@ SUPPORTED_LANGUAGES = {
 }
 
 
+def protect_specials(text: str) -> str:
+    text = text.replace("%s", "__PERCENT_S__")
+    text = text.replace("\n", "__NEWLINE__")
+    text = re.sub(r"([*().])", r"__SYM_\1__", text)
+    return text
+
+def restore_specials(text: str) -> str:
+    text = text.replace("__PERCENT_S__", "%s")
+    text = text.replace("__NEWLINE__", "\n")
+    text = re.sub(r"__SYM_(.)__", r"\1", text)
+    return text
+
+
 def remove_file(path: str):
     """Remove temporary files"""
     try:
@@ -137,8 +152,11 @@ def create_optimized_batches(texts: List[str], max_chars: int = 4500, max_texts:
     return batches
 
 
-def parse_google_translate_response(response_data: List, original_texts: List[str]) -> List[str]:
-    """Properly parse Google Translate API response."""
+def parse_google_translate_response(response_data: List, original_texts: List[str], sep_token: str = "<<|>>") -> List[str]:
+    """
+    Properly parse and recombine Google Translate API response.
+    Keeps batch integrity using custom SEP token.
+    """
     translations = []
 
     try:
@@ -146,33 +164,41 @@ def parse_google_translate_response(response_data: List, original_texts: List[st
             main_data = response_data[0]
 
             if main_data and isinstance(main_data, list):
-                for item in main_data:
-                    if item and isinstance(item, list) and len(item) > 0:
-                        translated_text = item[0]
-                        if translated_text and isinstance(translated_text, str):
-                            cleaned_text = clean_translation_text(translated_text)
-                            translations.append(cleaned_text)
+                # Combine all translated segments into a single string
+                combined_text = ''.join(
+                    item[0] for item in main_data
+                    if item and isinstance(item, list) and isinstance(item[0], str)
+                )
 
-                if len(translations) == len(original_texts):
-                    return translations
-                elif translations:
-                    result = []
-                    for i, original in enumerate(original_texts):
-                        if i < len(translations):
-                            result.append(translations[i])
-                        else:
-                            result.append(original)
-                    return result
+                # Now split by your unique separator
+                split_translations = [part.strip() for part in combined_text.split(sep_token)]
+
+                # Handle cases where Google accidentally split or merged texts
+                if len(split_translations) < len(original_texts):
+                    # Pad with last translation or original text if missing
+                    while len(split_translations) < len(original_texts):
+                        split_translations.append(original_texts[len(split_translations)])
+                elif len(split_translations) > len(original_texts):
+                    # Merge extras into the last element
+                    merged = split_translations[:len(original_texts)-1]
+                    merged.append(' '.join(split_translations[len(original_texts)-1:]))
+                    split_translations = merged
+
+                translations = split_translations
+
     except Exception as e:
         print(f"Error parsing Google Translate response: {e}")
+        return original_texts
 
-    return original_texts
+    # Fallback
+    return translations if translations else original_texts
 
 
 async def translate_with_google_batch(texts: List[str], target_lang: str, session: aiohttp.ClientSession) -> List[str]:
     """Translate batch using Google Translate API"""
     try:
-        combined_text = "\n".join(texts)
+        SEP = "<<|>>"
+        combined_text = SEP.join(texts)
 
         params = {
             "client": "gtx",
@@ -199,7 +225,7 @@ async def translate_with_google_batch(texts: List[str], target_lang: str, sessio
 
 
 async def translate_with_libretranslate_batch(texts: List[str], target_lang: str, session: aiohttp.ClientSession) -> \
-List[str]:
+        List[str]:
     """Translate batch using LibreTranslate"""
     try:
         payload = {
@@ -611,14 +637,19 @@ async def translate_file(
         if not translatable_texts:
             raise HTTPException(status_code=400, detail="No translatable texts found in the file")
 
+        protected = [protect_specials(t) for t in translatable_texts]
+
         # Batch translate all texts
         start_time = time.time()
-        translated_texts = await batch_translate_texts_async(translatable_texts, target_lang)
+        translated_texts = await batch_translate_texts_async(protected, target_lang)
         translation_time = time.time() - start_time
 
         print(f"Translation completed in {translation_time:.2f} seconds")
 
         # Write translated file based on type
+        translated_texts = [restore_specials(t) for t in translated_texts]
+
+
         if file_ext == '.po':
             write_translated_po_file(file_structure, translated_texts, output_path)
         elif file_ext in ['.json']:
@@ -719,3 +750,36 @@ async def sitemap():
     sitemap_xml += "</urlset>"
 
     return Response(content=sitemap_xml, media_type="application/xml")
+
+
+from fastapi.responses import HTMLResponse
+import os
+
+
+# Helper function to load HTML pages
+def read_html(file_name: str):
+    file_path = os.path.join("templates", file_name)
+    with open(file_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+# Legal and info pages
+@app.get("/privacy-policy", response_class=HTMLResponse)
+async def privacy_policy():
+    return read_html("privacy-policy.html")
+
+
+@app.get("/terms", response_class=HTMLResponse)
+async def terms():
+    return read_html("terms.html")
+
+
+@app.get("/contact", response_class=HTMLResponse)
+async def contact():
+    return read_html("contact.html")
+
+
+@app.get("/about", response_class=HTMLResponse)
+async def about():
+    return read_html("about.html")
+
