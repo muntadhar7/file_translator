@@ -727,33 +727,7 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
 
 
-@app.get("/sitemap.xml", include_in_schema=False)
-async def sitemap():
-    """Dynamically generate sitemap for the website"""
-    domain = "https://translatefiles.space"
-    urls = [
-        {"loc": f"{domain}/", "changefreq": "daily", "priority": "1.0"},
-        {"loc": f"{domain}/supported-formats", "changefreq": "weekly", "priority": "0.8"},
-        {"loc": f"{domain}/about", "changefreq": "weekly", "priority": "0.8"},
-        {"loc": f"{domain}/contact", "changefreq": "weekly", "priority": "0.8"},
-        {"loc": f"{domain}/privacy-policy", "changefreq": "weekly", "priority": "0.8"},
-        {"loc": f"{domain}/terms", "changefreq": "weekly", "priority": "0.8"},
-        # You can add more pages here if needed
-    ]
 
-    sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-
-    for url in urls:
-        sitemap_xml += "  <url>\n"
-        sitemap_xml += f"    <loc>{url['loc']}</loc>\n"
-        sitemap_xml += f"    <changefreq>{url['changefreq']}</changefreq>\n"
-        sitemap_xml += f"    <priority>{url['priority']}</priority>\n"
-        sitemap_xml += "  </url>\n"
-
-    sitemap_xml += "</urlset>"
-
-    return Response(content=sitemap_xml, media_type="application/xml")
 
 
 from fastapi.responses import HTMLResponse
@@ -766,6 +740,9 @@ def read_html(file_name: str):
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap():
+    return read_html("sitemap.xml")
 
 # Legal and info pages
 @app.get("/privacy-policy", response_class=HTMLResponse)
