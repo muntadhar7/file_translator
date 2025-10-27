@@ -732,7 +732,7 @@ import os
 
 # Helper function to load HTML pages
 def read_html(file_name: str):
-    file_path = os.path.join("pages", file_name)
+    file_path = os.path.join("templates", file_name)
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
 
