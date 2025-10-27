@@ -734,6 +734,10 @@ async def sitemap():
     urls = [
         {"loc": f"{domain}/", "changefreq": "daily", "priority": "1.0"},
         {"loc": f"{domain}/supported-formats", "changefreq": "weekly", "priority": "0.8"},
+        {"loc": f"{domain}/about", "changefreq": "weekly", "priority": "0.8"},
+        {"loc": f"{domain}/contact", "changefreq": "weekly", "priority": "0.8"},
+        {"loc": f"{domain}/privacy-policy", "changefreq": "weekly", "priority": "0.8"},
+        {"loc": f"{domain}/terms", "changefreq": "weekly", "priority": "0.8"},
         # You can add more pages here if needed
     ]
 
