@@ -719,3 +719,22 @@ async def sitemap():
     sitemap_xml += "</urlset>"
 
     return Response(content=sitemap_xml, media_type="application/xml")
+
+
+
+
+def read_html(file_name):
+    with open(os.path.join("pages", file_name), encoding="utf-8") as f:
+        return f.read()
+
+@router.get("/privacy-policy", response_class=HTMLResponse)
+def privacy_policy(): return read_html("privacy-policy.html")
+
+@router.get("/terms", response_class=HTMLResponse)
+def terms(): return read_html("terms.html")
+
+@router.get("/contact", response_class=HTMLResponse)
+def contact(): return read_html("contact.html")
+
+@router.get("/about", response_class=HTMLResponse)
+def about(): return read_html("about.html")
