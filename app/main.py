@@ -723,18 +723,34 @@ async def sitemap():
 
 
 
-def read_html(file_name):
-    with open(os.path.join("pages", file_name), encoding="utf-8") as f:
+from fastapi.responses import HTMLResponse
+import os
+
+
+
+
+
+# Helper function to load HTML pages
+def read_html(file_name: str):
+    file_path = os.path.join("pages", file_name)
+    with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
 
-@router.get("/privacy-policy", response_class=HTMLResponse)
-def privacy_policy(): return read_html("privacy-policy.html")
+# Legal and info pages
+@app.get("/privacy-policy", response_class=HTMLResponse)
+async def privacy_policy():
+    return read_html("privacy-policy.html")
 
-@router.get("/terms", response_class=HTMLResponse)
-def terms(): return read_html("terms.html")
+@app.get("/terms", response_class=HTMLResponse)
+async def terms():
+    return read_html("terms.html")
 
-@router.get("/contact", response_class=HTMLResponse)
-def contact(): return read_html("contact.html")
+@app.get("/contact", response_class=HTMLResponse)
+async def contact():
+    return read_html("contact.html")
 
-@router.get("/about", response_class=HTMLResponse)
-def about(): return read_html("about.html")
+@app.get("/about", response_class=HTMLResponse)
+async def about():
+    return read_html("about.html")
+
+    
