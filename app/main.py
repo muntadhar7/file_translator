@@ -760,3 +760,9 @@ async def contact():
 @app.get("/about", response_class=HTMLResponse)
 async def about():
     return read_html("about.html")
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    content = read_html("robots.txt")
+    return Response(content=content, media_type="text/plain")
+
