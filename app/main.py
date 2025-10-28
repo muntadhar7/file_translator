@@ -15,7 +15,8 @@ import xml.etree.ElementTree as ET
 from typing import List, Dict, Tuple
 import asyncio
 import aiohttp
-from fastapi.responses import Response
+from fastapi.responses import Response, HTMLResponse
+import os
 
 app = FastAPI(
     title="Universal File Translator",
@@ -730,11 +731,9 @@ if __name__ == "__main__":
 
 
 
-from fastapi.responses import HTMLResponse
-import os
 
 
-# Helper function to load HTML pages
+# Helper function to load HTML/XML files
 def read_html(file_name: str):
     file_path = os.path.join("templates", file_name)
     with open(file_path, "r", encoding="utf-8") as f:
@@ -742,25 +741,22 @@ def read_html(file_name: str):
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap():
-    return read_html("sitemap.xml")
+    content = read_html("sitemap.xml")
+    return Response(content=content, media_type="application/xml")
 
 # Legal and info pages
 @app.get("/privacy-policy", response_class=HTMLResponse)
 async def privacy_policy():
     return read_html("privacy-policy.html")
 
-
 @app.get("/terms", response_class=HTMLResponse)
 async def terms():
     return read_html("terms.html")
-
 
 @app.get("/contact", response_class=HTMLResponse)
 async def contact():
     return read_html("contact.html")
 
-
 @app.get("/about", response_class=HTMLResponse)
 async def about():
     return read_html("about.html")
-
