@@ -60,6 +60,16 @@
                         </select>
                     </div>
 
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-bar" id="progressBar"></div>
+                        <div class="progress-info">
+                            <div class="progress-text" id="progressText">
+                                <span id="batchInfo">Starting translation...</span>
+                                <span class="progress-percentage" id="progressPercentage">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary" id="translateBtn">
                         <i class="fas fa-magic"></i>
                         Translate & Preview
@@ -188,7 +198,7 @@
   <h3>Why Choose This Tool?</h3>
   <ul>
     <li>Fast and secure translation of software localization files.</li>
-    <li>Supports 100+ languages and 8 popular file types.</li>
+    <li>Supports many languages and 8 popular file types.</li>
     <li>No sign-up required — completely free to use.</li>
   </ul>
   <p>
@@ -207,7 +217,6 @@
       <p>© 2025 Universal File Translator. All rights reserved.</p>
     </footer>
 
-
     <!-- Cookie Consent Banner -->
     <div id="cookieConsent" class="cookie-consent hidden">
       <div class="cookie-content">
@@ -219,20 +228,6 @@
         <button id="acceptCookies" class="btn btn-primary">Accept</button>
       </div>
     </div>
-
-    <script>
-      // Show cookie banner if not accepted
-      document.addEventListener("DOMContentLoaded", () => {
-        if (!localStorage.getItem("cookieAccepted")) {
-          document.getElementById("cookieConsent").classList.remove("hidden");
-        }
-
-        document.getElementById("acceptCookies").addEventListener("click", () => {
-          localStorage.setItem("cookieAccepted", "true");
-          document.getElementById("cookieConsent").classList.add("hidden");
-        });
-      });
-    </script>
 
 
     <script src="/static/js/script.js"></script>

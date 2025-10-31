@@ -15,8 +15,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const statSkipped = document.getElementById('statSkipped');
     const statTotal = document.getElementById('statTotal');
 
+    // Progress elements
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercentage = document.getElementById('progressPercentage');
+    const progressText = document.getElementById('progressText');
+    const progressMessage = document.getElementById('progressMessage');
+
+
     let translationData = [];
     let originalData = [];
+    let progressInterval = null;
 
     // File drag and drop
     fileDropZone.addEventListener('dragover', (e) => {
@@ -278,7 +287,94 @@ document.addEventListener('DOMContentLoaded', function() {
         return div.innerHTML;
     }
 
-    // Single translation flow
+    // Progress tracking functions
+    function startProgressTracking(taskId) {
+        // Clear any existing interval
+        if (progressInterval) {
+            clearInterval(progressInterval);
+        }
+
+        // Show progress container
+        progressContainer.classList.add('progress-active');
+        updateProgress(0, 0, 'Starting translation...');
+
+        // Poll for progress updates
+        progressInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/translation-progress/${taskId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const progress = await response.json();
+
+                if (progress.error) {
+                    console.error('Progress error:', progress.error);
+                    clearInterval(progressInterval);
+                    showMessage(`Progress error: ${progress.error}`, 'error');
+                    return;
+                }
+
+                updateProgress(
+                    progress.current_batch || 0,
+                    progress.total_batches || 1,
+                    progress.message || 'Processing...'
+                );
+
+                // Stop polling if task is completed or failed
+                if (progress.status === 'completed' || progress.status === 'error') {
+                    clearInterval(progressInterval);
+                    if (progress.status === 'completed') {
+                        progressMessage.textContent = 'Translation completed!';
+                    } else {
+                        progressMessage.textContent = `Error: ${progress.message}`;
+                        showMessage(`Translation error: ${progress.message}`, 'error');
+                    }
+                    // Hide progress after a delay
+                    setTimeout(() => {
+                        progressContainer.classList.remove('progress-active');
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('Error fetching progress:', error);
+                // Don't show error to user for progress polling, just stop
+                clearInterval(progressInterval);
+            }
+        }, 1000); // Poll every second
+    }
+
+    function updateProgress(completed, total, message) {
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    progressBar.style.width = `${percentage}%`;
+    progressPercentage.textContent = `${percentage}%`;
+
+    // Just show the message without repeating batch numbers
+    document.getElementById('batchInfo').textContent = message;
+}
+
+    async function waitForTranslationCompletion(taskId, maxAttempts = 300) {
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            try {
+                const response = await fetch(`/translation-result/${taskId}`);
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.status === 'completed' || result.status === 'error') {
+                        return result;
+                    }
+                }
+                // Wait 1 second before checking again
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            } catch (error) {
+                console.error('Error checking translation result:', error);
+                // Wait 1 second before retrying
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+        throw new Error('Translation timeout - took too long to complete');
+    }
+
+    // Main form submission with progress tracking
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -299,57 +395,72 @@ document.addEventListener('DOMContentLoaded', function() {
         messageDiv.innerHTML = '';
         downloadSection.classList.add('hidden');
 
+        // Show progress container
+        progressContainer.classList.add('progress-active');
+        updateProgress(0, 0, 'Starting translation...');
+
         try {
-            const response = await fetch('/translate/', {
+            // First, start the translation task and get task ID
+            const startResponse = await fetch('/start-translation/', {
                 method: 'POST',
                 body: formData
             });
 
-            if (response.ok) {
-                // Get the preview data from headers
-                const previewHeader = response.headers.get('X-Translation-Preview');
-                const statsHeader = response.headers.get('X-Translation-Stats');
-
-                let previewData = null;
-                let statsData = null;
-
-                if (previewHeader) {
-                    try {
-                        previewData = JSON.parse(previewHeader);
-                        statsData = JSON.parse(statsHeader);
-                    } catch (e) {
-                        console.error('Error parsing preview data:', e);
-                    }
-                }
-
-                // Get the file blob for download
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const filename = 'translated_' + fileInput.files[0].name;
-
-                // Set up download
-                downloadBtn.href = url;
-                downloadBtn.download = filename;
-                downloadSection.classList.remove('hidden');
-
-                // Show preview if available
-                if (previewData && previewData.translations) {
-                    showTranslatedPreview(previewData.translations, previewData.stats, previewData.file_type);
-
-                    showMessage(
-                        `Translation completed! ${previewData.stats.translated}/${previewData.stats.total} strings translated successfully. Time: ${previewData.translation_time}`,
-                        'success'
-                    );
-                } else {
-                    showMessage('Translation completed successfully! Click download to get your file.', 'success');
-                }
-
-            } else {
-                const errorData = await response.json();
-                showMessage(`Error: ${errorData.detail || 'Unknown error occurred'}`, 'error');
+            if (!startResponse.ok) {
+                const errorData = await startResponse.json();
+                throw new Error(errorData.detail || 'Failed to start translation');
             }
+
+            const startData = await startResponse.json();
+            const taskId = startData.task_id;
+
+            // Start progress tracking
+            startProgressTracking(taskId);
+
+            // Wait for translation to complete
+            const result = await waitForTranslationCompletion(taskId);
+
+            if (result.status === 'completed') {
+                // Download the translated file
+                const downloadResponse = await fetch(`/download-translation/${taskId}`);
+                if (downloadResponse.ok) {
+                    const blob = await downloadResponse.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const filename = 'translated_' + fileInput.files[0].name;
+
+                    // Set up download
+                    downloadBtn.href = url;
+                    downloadBtn.download = filename;
+                    downloadSection.classList.remove('hidden');
+
+                    // Show preview if available
+                    if (result.preview) {
+                        showTranslatedPreview(
+                            result.preview.translations,
+                            result.preview.stats,
+                            result.preview.file_type
+                        );
+
+                        showMessage(
+                            `Translation completed! ${result.preview.stats.translated}/${result.preview.stats.total} strings translated successfully.`,
+                            'success'
+                        );
+                    } else {
+                        showMessage('Translation completed successfully! Click download to get your file.', 'success');
+                    }
+                } else {
+                    throw new Error('Failed to download translated file');
+                }
+            } else {
+                throw new Error(result.message || 'Translation failed');
+            }
+
         } catch (error) {
-            showMessage(`Network error: ${error.message}`, 'error');
+            showMessage(`Error: ${error.message}`, 'error');
+            progressContainer.classList.remove('progress-active');
+            if (progressInterval) {
+                clearInterval(progressInterval);
+            }
         } finally {
             translateBtn.innerHTML = '<i class="fas fa-magic"></i> Translate & Preview';
             translateBtn.disabled = false;
@@ -369,6 +480,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span>${text}</span>
             </div>
         `;
+
+        // Auto-remove success messages after 5 seconds
+        if (type === 'success') {
+            setTimeout(() => {
+                if (messageDiv.innerHTML.includes(text)) {
+                    messageDiv.innerHTML = '';
+                }
+            }, 5000);
+        }
     }
 
     function updateStats(total, translated, skipped) {
