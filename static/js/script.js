@@ -499,3 +499,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Check if cookies were accepted before
+  if (!localStorage.getItem('cookiesAccepted')) {
+    document.getElementById('cookieConsent').style.display = 'block';
+  }
+
+  // Handle accept button
+  document.getElementById('acceptCookies').addEventListener('click', function() {
+    localStorage.setItem('cookiesAccepted', 'true');
+    document.getElementById('cookieConsent').style.display = 'none';
+  });
