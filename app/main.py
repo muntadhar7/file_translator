@@ -870,10 +870,6 @@ async def read_index():
     return FileResponse("templates/index.html")
 
 
-@app.get("/supported-formats")
-async def get_supported_formats():
-    """Return supported file formats"""
-    return {"formats": SUPPORTED_EXTENSIONS}
 
 
 # Helper function to load HTML/XML files
@@ -882,6 +878,14 @@ def read_html(file_name: str):
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/supported-formats")
+async def get_supported_formats():
+    """Return supported file formats"""
+    return {"formats": SUPPORTED_EXTENSIONS}
+
+@app.get("/supported_formats", response_class=HTMLResponse)
+async def supported_formats():
+    return read_html("supported-formats.html")
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap():
@@ -908,6 +912,7 @@ async def contact():
 @app.get("/about", response_class=HTMLResponse)
 async def about():
     return read_html("about.html")
+
 
 
 @app.get("/robots.txt", include_in_schema=False)

@@ -498,3 +498,4 @@ document.addEventListener('DOMContentLoaded', function() {
         statsSection.classList.remove('hidden');
     }
 });
+
